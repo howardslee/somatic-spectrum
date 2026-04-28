@@ -1,0 +1,14 @@
+metric,value
+N_background,21381.0
+N_background_prenatal,9014.0
+background_prenatal_rate,0.4215892614938497
+N_targets_present,78.0
+N_targets_in_background,77.0
+observed_prenatal_all78,45.0
+observed_prenatal_background_targets,45.0
+binomial_p_all78,0.00010223316043169773
+binomial_p_background_targets,6.66752284276953e-05
+null_mean,32.5026
+null_sd,4.328070382976691
+permutation_p,0.0029
+observed_percentile,99.9
