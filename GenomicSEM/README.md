@@ -13,10 +13,10 @@ cd GenomicSEM
 export PATH="/usr/local/bin:$PATH"
 ```
 
-If using the local Framework R installation that has `GenomicSEM` installed:
+Confirm that the active R installation can load `GenomicSEM`:
 
 ```bash
-/Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/bin/Rscript --version
+Rscript -e 'stopifnot(requireNamespace("GenomicSEM", quietly = TRUE))'
 ```
 
 ## Inputs
@@ -124,8 +124,7 @@ Rscript scripts/03_factor_model.R \
 The reviewer-requested LDSC intercept/ratio for the Somatic5 factor GWAS is produced from the saved factor GWAS output:
 
 ```bash
-/Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/bin/Rscript \
-  scripts/05_factor_ldsc_intercept.R \
+Rscript scripts/05_factor_ldsc_intercept.R \
   --model-dir results/models/somatic5 \
   --ld data/reference/eur_w_ld_chr \
   --outdir results/models/somatic5/ldsc_factor \
@@ -152,8 +151,7 @@ Observed-scale h2: 0.1057 (0.0036)
 To formally test whether pairwise residual covariances remain beyond the Somatic5 factor, run all-pairs residual-coupling tests:
 
 ```bash
-/Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/bin/Rscript \
-  scripts/03_factor_model.R \
+Rscript scripts/03_factor_model.R \
   --only-coupling \
   --ldsc-rds results/ldsc_universe/ldsc/ldsc_universe.rds \
   --outdir results/models/somatic5 \
