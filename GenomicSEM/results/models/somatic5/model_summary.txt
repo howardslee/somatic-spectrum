@@ -1,0 +1,161 @@
+=============================================================
+         NES SOMATIC CORE FACTOR MODEL SUMMARY               
+=============================================================
+
+Model specification:
+  F =~ Chronic_Pain + Fibromyalgia + MECFS + IBS + Migraine
+
+Traits:
+  - Chronic_Pain
+  - Fibromyalgia
+  - MECFS
+  - IBS
+  - Migraine
+
+-------------------------------------------------------------
+FIT STATISTICS
+-------------------------------------------------------------
+  metric       value threshold   pass
+  <char>       <num>    <char> <char>
+   chisq 13.84986469      <NA>   <NA>
+      df  5.00000000      <NA>   <NA>
+ p_chisq  0.01659175    > 0.05   FAIL
+     CFI  0.99092668    > 0.95   PASS
+    SRMR  0.04325619    < 0.08   PASS
+     AIC 33.84986469      <NA>   <NA>
+
+-------------------------------------------------------------
+FACTOR LOADINGS
+-------------------------------------------------------------
+        trait    lambda   lambda_se lambda_std lambda_z      lambda_p
+       <char>     <num>       <num>      <num>    <num>         <num>
+ Chronic_Pain 0.1972611 0.008240532  0.7259919 23.93791 1.234832e-126
+ Fibromyalgia 0.4960108 0.027358612  0.9510440 18.12997  1.848652e-73
+        MECFS 0.2805467 0.017592934  0.6325547 15.94656  3.010439e-57
+          IBS 0.2477416 0.012342455  0.8019067 20.07231  1.288763e-89
+     Migraine 0.2548824 0.011218934  0.7163899 22.71895 2.910656e-114
+
+-------------------------------------------------------------
+RESIDUAL CORRELATIONS (approx)
+-------------------------------------------------------------
+       trait1       trait2 observed_rg model_implied_rg approx_residual
+       <char>       <char>       <num>            <num>           <num>
+ Fibromyalgia     Migraine   0.5880110        0.6813183     -0.09330729
+          IBS     Migraine   0.6619467        0.5744779      0.08746880
+ Fibromyalgia        MECFS   0.6811184        0.6015874      0.07953108
+ Fibromyalgia          IBS   0.7182249        0.7626485     -0.04442356
+        MECFS     Migraine   0.4169539        0.4531559     -0.03620193
+ Chronic_Pain          IBS   0.5477841        0.5821778     -0.03439363
+ Chronic_Pain     Migraine   0.5375447        0.5200933      0.01745140
+        MECFS          IBS   0.5241858        0.5072499      0.01693593
+ Chronic_Pain Fibromyalgia   0.7047707        0.6904502      0.01432047
+ Chronic_Pain        MECFS   0.4482371        0.4592296     -0.01099256
+
+-------------------------------------------------------------
+RESIDUAL COUPLING TESTS
+-------------------------------------------------------------
+
+Pairs tested:
+  Selection criteria: threshold=0.10, top_pairs=0, test_all=TRUE
+  Total pairs tested: 10
+  FDR correction: BH (applied)
+
+  Fibromyalgia ~~ Migraine (selected: all_pairs, method: manual+manual_chisq):
+    Approx residual: -0.0933
+    Residual covariance: -0.0290 (SE=0.0134, p=0.0305)
+    χ² difference: 5.47 (df=1, p_nominal=0.0193, p_FDR=0.0812)
+    ΔAIC: -3.47
+    Interpretation: NOT SIGNIFICANT (FDR): Factor fully explains covariance
+
+  IBS ~~ Migraine (selected: all_pairs, method: manual+manual_chisq):
+    Approx residual: 0.0875
+    Residual covariance: 0.0149 (SE=0.0072, p=0.0391)
+    χ² difference: 5.28 (df=1, p_nominal=0.0216, p_FDR=0.0812)
+    ΔAIC: -3.28
+    Interpretation: NOT SIGNIFICANT (FDR): Factor fully explains covariance
+
+  Fibromyalgia ~~ MECFS (selected: all_pairs, method: manual+manual_chisq):
+    Approx residual: 0.0795
+    Residual covariance: 0.0295 (SE=0.0141, p=0.0363)
+    χ² difference: 5.07 (df=1, p_nominal=0.0244, p_FDR=0.0812)
+    ΔAIC: -3.07
+    Interpretation: NOT SIGNIFICANT (FDR): Factor fully explains covariance
+
+  Fibromyalgia ~~ IBS (selected: all_pairs, method: manual+manual_chisq):
+    Approx residual: -0.0444
+    Residual covariance: -0.0109 (SE=0.0157, p=0.4887)
+    χ² difference: 0.00 (df=1, p_nominal=0.9840, p_FDR=0.9840)
+    ΔAIC: 2.00
+    Interpretation: NOT SIGNIFICANT (FDR): Factor fully explains covariance
+
+  MECFS ~~ Migraine (selected: all_pairs, method: manual+manual_chisq):
+    Approx residual: -0.0362
+    Residual covariance: -0.0116 (SE=0.0068, p=0.0888)
+    χ² difference: 3.54 (df=1, p_nominal=0.0598, p_FDR=0.0996)
+    ΔAIC: -1.54
+    Interpretation: NOT SIGNIFICANT (FDR): Factor fully explains covariance
+
+  Chronic_Pain ~~ IBS (selected: all_pairs, method: manual+manual_chisq):
+    Approx residual: -0.0344
+    Residual covariance: -0.0079 (SE=0.0049, p=0.1075)
+    χ² difference: 4.20 (df=1, p_nominal=0.0405, p_FDR=0.0996)
+    ΔAIC: -2.20
+    Interpretation: NOT SIGNIFICANT (FDR): Factor fully explains covariance
+
+  Chronic_Pain ~~ Migraine (selected: all_pairs, method: manual+manual_chisq):
+    Approx residual: 0.0175
+    Residual covariance: 0.0064 (SE=0.0039, p=0.0999)
+    χ² difference: 3.66 (df=1, p_nominal=0.0557, p_FDR=0.0996)
+    ΔAIC: -1.66
+    Interpretation: NOT SIGNIFICANT (FDR): Factor fully explains covariance
+
+  MECFS ~~ IBS (selected: all_pairs, method: manual+manual_chisq):
+    Approx residual: 0.0169
+    Residual covariance: 0.0039 (SE=0.0089, p=0.6638)
+    χ² difference: 0.37 (df=1, p_nominal=0.5454, p_FDR=0.6817)
+    ΔAIC: 1.63
+    Interpretation: NOT SIGNIFICANT (FDR): Factor fully explains covariance
+
+  Chronic_Pain ~~ Fibromyalgia (selected: all_pairs, method: manual+manual_chisq):
+    Approx residual: 0.0143
+    Residual covariance: 0.0058 (SE=0.0088, p=0.5114)
+    χ² difference: 0.09 (df=1, p_nominal=0.7646, p_FDR=0.8496)
+    ΔAIC: 1.91
+    Interpretation: NOT SIGNIFICANT (FDR): Factor fully explains covariance
+
+  Chronic_Pain ~~ MECFS (selected: all_pairs, method: manual+manual_chisq):
+    Approx residual: -0.0110
+    Residual covariance: -0.0034 (SE=0.0061, p=0.5793)
+    χ² difference: 0.39 (df=1, p_nominal=0.5299, p_FDR=0.6817)
+    ΔAIC: 1.61
+    Interpretation: NOT SIGNIFICANT (FDR): Factor fully explains covariance
+
+
+-------------------------------------------------------------
+FULL MODEL OUTPUT
+-------------------------------------------------------------
+            lhs op          rhs Unstand_Est          Unstand_SE STD_Genotype
+2             F =~ Chronic_Pain  0.19726112 0.00824053176504656   0.72599193
+3             F =~ Fibromyalgia  0.49601078   0.027358612412096   0.95104400
+5             F =~        MECFS  0.28054672  0.0175929341981861   0.63255476
+4             F =~          IBS  0.24774156  0.0123424547684368   0.80190670
+6             F =~     Migraine  0.25488243  0.0112189338978517   0.71638995
+1  Chronic_Pain ~~ Chronic_Pain  0.03491573 0.00337381528055488   0.47293572
+8  Fibromyalgia ~~ Fibromyalgia  0.02598109   0.036088262441628   0.09551539
+10        MECFS ~~        MECFS  0.11799810  0.0130135785214191   0.59987452
+9           IBS ~~          IBS  0.03406849  0.0104068423280489   0.35694577
+11     Migraine ~~     Migraine  0.06161947 0.00782760064675997   0.48678546
+7             F ~~            F  1.00000000                       1.00000000
+      STD_Genotype_SE    STD_All       p_value
+2   0.030328121243225 0.72599193 1.234832e-126
+3  0.0524569898020431 0.95104396  1.848652e-73
+5  0.0396671575083641 0.63255474  3.010439e-57
+4   0.039950901013499 0.80190665  1.288763e-89
+6  0.0315327038039091 0.71638994 2.910656e-114
+1  0.0456984933946354 0.47293572  4.227253e-25
+8   0.132673626225653 0.09551538  4.715670e-01
+10 0.0661579959320235 0.59987450  1.219954e-19
+9   0.109035795961318 0.35694572  1.061633e-03
+11  0.061836937658919 0.48678545  3.488044e-15
+7                     1.00000000            NA
+

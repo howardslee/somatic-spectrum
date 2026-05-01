@@ -1,0 +1,21 @@
+Multivariate ld-score regression of 1 traits (GenomicSEM/results/models/somatic5/ldsc_factor/Somatic5_factor.sumstats.gz) began at: 2026-05-01 11:58:01.786997
+Reading in LD scores
+Read in summary statistics [1/1] from: GenomicSEM/results/models/somatic5/ldsc_factor/Somatic5_factor.sumstats.gz
+Out of 1222346 SNPs, 1222346 remain after merging with LD-score files
+Removing 0 SNPs with Chi^2 > 363.856434684055; 1222346 remain
+          
+Estimating heritability [1/1] for: GenomicSEM/results/models/somatic5/ldsc_factor/Somatic5_factor.sumstats.gz
+Heritability Results for trait: GenomicSEM/results/models/somatic5/ldsc_factor/Somatic5_factor.sumstats.gz
+Mean Chi^2 across remaining SNPs: 1.7559
+Lambda GC: 1.5694
+Intercept: 1.0014 (0.01)
+Ratio: 0.0018 (0.0133)
+Total Observed Scale h2: 0.1057 (0.0036)
+h2 Z: 29.3
+     
+      
+Genetic Correlation Results
+     
+LDSC finished running at 2026-05-01 11:58:08.137413
+Running LDSC for all files took 0 minutes and 6 seconds
+     

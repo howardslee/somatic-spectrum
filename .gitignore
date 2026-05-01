@@ -8,3 +8,11 @@ __pycache__/
 .ipynb_checkpoints/
 .venv/
 venv/
+Brainspan/
+GenomicSEM/data/
+GenomicSEM/results/
+GenomicSEM/*.log
+GenomicSEM/*_munge.log
+GenomicSEM/*_ldsc.log
+GenomicSEM/scripts/old/
+*.code-workspace

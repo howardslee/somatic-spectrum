@@ -40,7 +40,7 @@
 #   p_type,col_p,col_log10p
 #
 # CANONICAL OUTPUT COLUMNS:
-#   FULL: SNP, CHR, BP, A1, A2, BETA, SE, P, N, N_CASES, N_CONTROLS (archival)
+#   FULL: SNP, SNP_RAW, CHR, BP, A1, A2, BETA, SE, P, N, N_CASES, N_CONTROLS (archival)
 #   FUMA: SNP, CHR, BP, A1, A2, BETA, SE, P, N  (minimal schema, all SNPs)
 #   HM3:  SNP, CHR, BP, A1, A2, BETA, SE, P, N  (minimal schema, HM3 SNPs only)
 # =============================================================================
@@ -201,35 +201,6 @@ HM3_POS <- HM3_POS[, .SD[1], by=.(CHR, BP)]
 setkey(HM3_POS, CHR, BP)
 info(paste0("HM3 position map: ", format(nrow(HM3_POS), big.mark=","), " SNPs"))
 
-restore_rsids_hm3 <- function(dt, trait) {
-  # Ensure proper types without nuking values
-  dt[, CHR := suppressWarnings(as.integer(as.character(CHR)))]
-  dt[, BP  := suppressWarnings(as.integer(as.character(BP)))]
-  
-  if (!("SNP" %in% names(dt))) dt[, SNP := NA_character_]
-  dt[, SNP := as.character(SNP)]
-  
-  # IMPORTANT: Fill rsIDs for:
-  #   (a) missing SNP (NA, "", "NA")
-  #   (b) non-rsID SNPs (e.g., "10:100000625:G:A" - CHR:BP:A1:A2 format from FULL)
-  # This ensures we try to replace fallback SNP IDs with real HM3 rsIDs
-  is_rs <- !is.na(dt$SNP) & grepl("^rs[0-9]+[a-zA-Z0-9_]*$", dt$SNP, ignore.case=TRUE)
-  need <- which(is.na(dt$SNP) | dt$SNP == "" | dt$SNP == "NA" | !is_rs)
-  
-  if (length(need) > 0) {
-    matched <- HM3_POS[dt[need], on=.(CHR, BP), nomatch=NA, .(RSID)]
-    dt[need, SNP := matched$RSID]
-  }
-  
-  # Count final rsID-matched variants
-  is_rs2 <- !is.na(dt$SNP) & grepl("^rs[0-9]+[a-zA-Z0-9_]*$", dt$SNP, ignore.case=TRUE)
-  n_matched <- sum(is_rs2)
-  
-  info(paste0(trait, ": HM3 rsID available ", format(n_matched, big.mark=","), " / ",
-              format(nrow(dt), big.mark=","), " variants (", round(100*n_matched/nrow(dt), 2), "%)"))
-  dt
-}
-
 # ------------------------------------------------------------------------------
 # Per trait processing
 # ------------------------------------------------------------------------------
@@ -240,8 +211,14 @@ for (i in seq_len(nrow(manifest))) {
   build  <- tolower(trimws(as.character(row$build)))
   sep    <- sep_to_fread(as.character(row$sep))
   
-  has_header <- as.logical(row$has_header)
-  if (is.na(has_header)) has_header <- TRUE
+  raw_has_header <- toupper(trimws(as.character(row$has_header)))
+  if (raw_has_header %in% c("TRUE", "T")) {
+    has_header <- TRUE
+  } else if (raw_has_header %in% c("FALSE", "F")) {
+    has_header <- FALSE
+  } else {
+    die(paste0(trait, ": has_header must be TRUE/FALSE, got '", row$has_header, "'"))
+  }
   
   header_override <- as.character(row$header_override)
   if (is.na(header_override) || header_override == "" || header_override == "NA") header_override <- NULL
@@ -268,10 +245,12 @@ for (i in seq_len(nrow(manifest))) {
   
   out_sumstats_full <- file.path(outdir, paste0(trait, ".hg19.full.sumstats.tsv.gz"))
   out_sumstats_hm3  <- file.path(outdir, paste0(trait, ".hg19.hm3.sumstats.tsv.gz"))
+  out_sumstats_fuma <- file.path(outdir, paste0(trait, ".hg19.fuma.sumstats.tsv.gz"))
   out_report        <- file.path(outdir, paste0(trait, ".conversion_report.json"))
   done_flag         <- file.path(outdir, ".done")
   
-  if (file.exists(done_flag) && file.exists(out_sumstats_full) && file.exists(out_sumstats_hm3) && file.exists(out_report)) {
+  if (file.exists(done_flag) && file.exists(out_sumstats_full) && file.exists(out_sumstats_hm3) &&
+      file.exists(out_sumstats_fuma) && file.exists(out_report)) {
     info(paste0(trait, ": already done, skipping"))
     next
   }
@@ -400,6 +379,16 @@ for (i in seq_len(nrow(manifest))) {
     N_CONTROLS <- as.integer(N_control_const)
   }
   
+  # For LDSC / HM3 files, use effective sample size for case-control traits.
+  # Keep raw N and case/control counts in the archival FULL file.
+  N_HM3 <- N
+  if (all(!is.na(N_CASES), !is.na(N_CONTROLS))) {
+    valid_cc <- is.finite(N_CASES) & is.finite(N_CONTROLS) & N_CASES > 0 & N_CONTROLS > 0
+    if (any(valid_cc)) {
+      N_HM3[valid_cc] <- as.integer(round(4 * N_CASES[valid_cc] * N_CONTROLS[valid_cc] / (N_CASES[valid_cc] + N_CONTROLS[valid_cc])))
+    }
+  }
+  
   if (effect_type == "OR") {
     bad_or <- which(is.na(EFF) | !is.finite(EFF) | EFF <= 0)
     if (length(bad_or) > 0) warn(paste0(trait, ": ", length(bad_or), " invalid OR values will be filtered"))
@@ -408,7 +397,7 @@ for (i in seq_len(nrow(manifest))) {
     BETA <- EFF
   }
   
-  canon <- data.table(SNP_RAW=SNP_RAW, CHR=CHR, BP=BP, A1=A1, A2=A2, BETA=BETA, SE=SE, P=P, N=N, N_CASES=N_CASES, N_CONTROLS=N_CONTROLS)
+  canon <- data.table(SNP_RAW=SNP_RAW, CHR=CHR, BP=BP, A1=A1, A2=A2, BETA=BETA, SE=SE, P=P, N=N, N_HM3=N_HM3, N_CASES=N_CASES, N_CONTROLS=N_CONTROLS)
   n_in <- nrow(canon)
   
   # Basic QC filters (SNPs only; drop indels for LDSC stability)
@@ -434,12 +423,14 @@ for (i in seq_len(nrow(manifest))) {
     build_input = build,
     build_output = "hg19",
     n_input_rows = n_in,
-    n_after_qc = nrow(canon)
+    n_after_qc = nrow(canon),
+    hm3_uses_neff = any(is.finite(canon$N_HM3) & is.finite(canon$N) & canon$N_HM3 != canon$N)
   )
   
   # Liftover if hg38
   if (build == "hg38") {
     info(paste0(trait, ": Liftover hg38 → hg19"))
+    canon[, CHR_orig := CHR]
     lo <- liftover_hg38_to_hg19(canon$CHR, canon$BP)
     report$liftover_fail_rate <- lo$fail_rate
     
@@ -452,12 +443,19 @@ for (i in seq_len(nrow(manifest))) {
     canon[, CHR := as.integer(lo$chr)]
     canon[, BP  := as.integer(lo$bp)]
     
+    chr_swap <- canon[!is.na(CHR_orig) & CHR != CHR_orig]
+    if (nrow(chr_swap) > 0) {
+      warn(paste0(trait, ": ", format(nrow(chr_swap), big.mark=","), " variants lifted to a different chromosome; removing"))
+      canon <- canon[CHR == CHR_orig]
+    }
+    
     # Verify lifted CHR values are still valid (1-22)
     bad_chr <- which(!(canon$CHR %in% 1:22))
     if (length(bad_chr) > 0) {
       warn(paste0(trait, ": ", length(bad_chr), " variants lifted to invalid CHR; removing"))
       canon <- canon[canon$CHR %in% 1:22]
     }
+    canon[, CHR_orig := NULL]
   } else {
     report$liftover_fail_rate <- NA_real_
   }
@@ -468,6 +466,7 @@ for (i in seq_len(nrow(manifest))) {
   # ---------------------------------------------------------------------------
   # Output A (FULL): MAGMA/FUMA-safe file
   # - Use CHR:BP as SNP identifier (guarantees rsID↔BP consistency for FUMA)
+  # - Preserve original input identifier in SNP_RAW when available
   # - Do NOT HM3-filter
   # - Retains N_CASES/N_CONTROLS for archival purposes
   # ---------------------------------------------------------------------------
@@ -479,7 +478,7 @@ for (i in seq_len(nrow(manifest))) {
   setorder(full, SNP, P)
   full <- full[, .SD[1], by=SNP]
   
-  fwrite(full[,.(SNP,CHR,BP,A1,A2,BETA,SE,P,N,N_CASES,N_CONTROLS)],
+  fwrite(full[,.(SNP,SNP_RAW,CHR,BP,A1,A2,BETA,SE,P,N,N_CASES,N_CONTROLS)],
          out_sumstats_full, sep="\t", quote=FALSE, compress="gzip")
   
   report$n_full <- nrow(full)
@@ -490,7 +489,6 @@ for (i in seq_len(nrow(manifest))) {
   # - Same SNPs as FULL (not HM3-filtered)
   # - Minimal columns: SNP, CHR, BP, A1, A2, BETA, SE, P, N
   # ---------------------------------------------------------------------------
-  out_sumstats_fuma <- file.path(outdir, paste0(trait, ".hg19.fuma.sumstats.tsv.gz"))
   fwrite(full[,.(SNP,CHR,BP,A1,A2,BETA,SE,P,N)],
          out_sumstats_fuma, sep="\t", quote=FALSE, compress="gzip")
   info(paste0(trait, ": Wrote FUMA hg19 file (minimal schema): ", format(nrow(full), big.mark=","), " variants"))
@@ -518,14 +516,14 @@ for (i in seq_len(nrow(manifest))) {
   setorder(hm3, SNP, P)
   hm3 <- hm3[, .SD[1], by=SNP]
   
-  fwrite(hm3[,.(SNP,CHR,BP,A1,A2,BETA,SE,P,N)],
+  fwrite(hm3[,.(SNP,CHR,BP,A1,A2,BETA,SE,P,N=N_HM3)],
          out_sumstats_hm3, sep="\t", quote=FALSE, compress="gzip")
   
   # By-chromosome splits (HM3 file)
   by_chr_dir <- file.path(outdir, paste0(trait, ".hg19.hm3.by_chr"))
   dir.create(by_chr_dir, recursive=TRUE, showWarnings=FALSE)
   for (chr in 1:22) {
-    chr_dt <- hm3[CHR == chr, .(SNP,CHR,BP,A1,A2,BETA,SE,P,N)]
+    chr_dt <- hm3[CHR == chr, .(SNP,CHR,BP,A1,A2,BETA,SE,P,N=N_HM3)]
     fwrite(chr_dt, file.path(by_chr_dir, paste0("chr", chr, ".tsv.gz")),
            sep="\t", quote=FALSE, compress="gzip")
   }

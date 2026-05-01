@@ -142,7 +142,7 @@ ref_dir        <- get_arg("--ref", "data/reference")
 outdir         <- get_arg("--outdir", "results/factor_gwas")
 ldsc_path      <- get_arg("--ldsc-path", "ldsc")
 
-core_arg       <- get_arg("--core", "Fibromyalgia,MECFS,IBS,Chronic_Pain,MigAura")
+core_arg       <- get_arg("--core", "Fibromyalgia,MECFS,IBS,Chronic_Pain,Migraine")
 validation_arg <- get_arg("--validation", NULL)
 
 # Trait type: "continuous" or "binary" (affects OLS/linprob in sumstats)
@@ -215,6 +215,9 @@ assert("trait" %in% names(man), "Manifest missing 'trait' column")
 assert("N_const" %in% names(man), "Manifest missing 'N_const' column")
 
 man[, N_const := suppressWarnings(as.numeric(N_const))]
+if ("N_case_const" %in% names(man)) man[, N_case_const := suppressWarnings(as.numeric(N_case_const))]
+if ("N_control_const" %in% names(man)) man[, N_control_const := suppressWarnings(as.numeric(N_control_const))]
+if ("pop_prev" %in% names(man)) man[, pop_prev := suppressWarnings(as.numeric(pop_prev))]
 
 # Optional: Check for per-trait trait_type OR effect_scale in manifest (for mixed binary/continuous core)
 # Note: effect_scale (logit/linear) is more precise than trait_type (binary/continuous)
@@ -293,20 +296,13 @@ if (!file.exists(ldsc_rds)) {
   info("Running ldsc() - this may take several minutes...")
   
   # Build prevalence vectors from manifest
-  # For case-control traits: 
+  # For case-control traits:
   #   sample.prev = N_cases / N_total (from manifest)
-  #   population.prev = pop_prev column (literature values) or sample.prev if missing
+  #   population.prev = NA so LDSC remains on the observed scale
   # For continuous traits: NA
   sample_prev <- numeric(length(trait_names))
   pop_prev <- numeric(length(trait_names))
-  
-  # Check if manifest has pop_prev column
-  has_pop_prev_col <- "pop_prev" %in% names(man)
-  if (has_pop_prev_col) {
-    info("Using population prevalence from manifest 'pop_prev' column")
-  } else {
-    info("No 'pop_prev' column in manifest - h² will be on observed scale")
-  }
+  info("Using observed-scale LDSC for binary traits (population.prev=NA)")
   
   for (i in seq_along(trait_names)) {
     t <- trait_names[i]
@@ -322,21 +318,23 @@ if (!file.exists(ldsc_rds)) {
     n_case <- row$N_case_const
     n_control <- row$N_control_const
     n_total <- row$N_const
+    trait_type_row <- if ("trait_type" %in% names(row)) tolower(trimws(as.character(row$trait_type))) else NA_character_
+    is_binary_trait <- identical(trait_type_row, "binary")
     
-    # If we have case/control counts, it's binary
+    # If we have case/control counts, treat as binary and derive sample prevalence.
     if (!is.na(n_case) && !is.na(n_control) && n_case > 0 && n_control > 0) {
       sample_prev[i] <- n_case / (n_case + n_control)
       
-      # Use pop_prev from manifest if available, otherwise set NA
-      if (has_pop_prev_col && !is.na(row$pop_prev) && row$pop_prev > 0) {
-        pop_prev[i] <- row$pop_prev
-        info(sprintf("  [%d] %s: binary, sample.prev=%.4f, pop.prev=%.4f", 
-                     i, t, sample_prev[i], pop_prev[i]))
-      } else {
-        pop_prev[i] <- NA
-        info(sprintf("  [%d] %s: binary, sample.prev=%.4f, pop.prev=NA (observed scale)", 
-                     i, t, sample_prev[i]))
-      }
+      pop_prev[i] <- NA
+      info(sprintf("  [%d] %s: binary, sample.prev=%.4f, pop.prev=NA (observed scale)", 
+                   i, t, sample_prev[i]))
+    } else if (is_binary_trait) {
+      sample_prev[i] <- NA
+      pop_prev[i] <- NA
+      warn(sprintf("  [%d] %s: trait_type=binary but N_case_const/N_control_const missing; sample.prev unavailable",
+                   i, t))
+      info(sprintf("  [%d] %s: binary metadata present, sample.prev=NA, pop.prev=NA (observed scale)",
+                   i, t))
     } else {
       sample_prev[i] <- NA
       pop_prev[i] <- NA

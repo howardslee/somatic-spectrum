@@ -33,19 +33,35 @@ get_arg <- function(flag, default=NULL) {
   args[i + 1]
 }
 
+strip_outer_quotes <- function(x) {
+  if (is.null(x) || !length(x)) return(x)
+  x <- trimws(as.character(x))
+  x <- gsub("^[\"'`“”‘’]+|[\"'`“”‘’]+$", "", x, perl = TRUE)
+  trimws(x)
+}
+
+parse_csv_arg <- function(x) {
+  x <- strip_outer_quotes(x)
+  x <- gsub("[\uFF0C\u201A\u201E]", ",", x, perl = TRUE)
+  vals <- trimws(strsplit(x, ",", fixed = TRUE)[[1]])
+  vals <- strip_outer_quotes(vals)
+  vals[nzchar(vals)]
+}
+
 # ------------------------------------------------------------------------------
 # Arguments / Paths
 # ------------------------------------------------------------------------------
 ldsc_rds    <- get_arg("--ldsc-rds", "results/ldsc_universe/ldsc/ldsc_universe.rds")
 outdir      <- get_arg("--outdir",   "results/models/factor_model")
-core_traits <- get_arg("--core",     "Fibromyalgia,MECFS,IBS,Depression,PTSD,MigAura")
+core_traits <- get_arg("--core",     "Fibromyalgia,MECFS,IBS,Depression,PTSD,Migraine")
 resid_threshold <- as.numeric(get_arg("--resid-threshold", "0.10"))
 top_pairs   <- as.integer(get_arg("--top-pairs", "0"))  # Test top N misfit pairs (0 = use threshold only)
-apriori_pairs <- get_arg("--apriori-pairs", "")  # Comma-separated pairs to always test, e.g. "IBS-MigAura,Fibromyalgia-MECFS"
+apriori_pairs <- get_arg("--apriori-pairs", "")  # Comma-separated pairs to always test, e.g. "IBS-Migraine,Fibromyalgia-MECFS"
 test_all_pairs <- "--test-all-pairs" %in% args  # Test all pairs with FDR correction
 only_coupling <- "--only-coupling" %in% args
 
-core <- trimws(strsplit(core_traits, ",")[[1]])
+core <- parse_csv_arg(core_traits)
+assert(length(core) >= 2, "Core must contain at least two traits after parsing --core")
 info(paste0("Core traits: ", paste(core, collapse=", ")))
 info(paste0("Residual coupling threshold: ", resid_threshold))
 if (top_pairs > 0) info(paste0("Testing top ", top_pairs, " misfit pairs"))
@@ -585,7 +601,7 @@ if (!skip_to_coupling) {
 # ------------------------------------------------------------------------------
 info("Selecting pairs for residual coupling tests...")
 
-# Parse a priori pairs (format: "IBS-MigAura,Fibromyalgia-MECFS")
+# Parse a priori pairs (format: "IBS-Migraine,Fibromyalgia-MECFS")
 apriori_list <- list()
 if (nzchar(apriori_pairs)) {
   pairs_split <- trimws(strsplit(apriori_pairs, ",")[[1]])

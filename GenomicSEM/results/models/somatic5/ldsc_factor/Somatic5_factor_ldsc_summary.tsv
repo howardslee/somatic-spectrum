@@ -1,0 +1,2 @@
+trait	n_factor	n_snps_input	mean_chi2_line	lambda_gc_line	intercept_line	ratio_line	h2_line	log_path	rds_path	sumstats_path
+Somatic5_factor	363856.434684055	1222346	Mean Chi^2 across remaining SNPs: 1.7559	Lambda GC: 1.5694	Intercept: 1.0014 (0.01)	Ratio: 0.0018 (0.0133)	Total Observed Scale h2: 0.1057 (0.0036)	GenomicSEM/results/models/somatic5/ldsc_factor/Somatic5_factor_ldsc.log	GenomicSEM/results/models/somatic5/ldsc_factor/Somatic5_factor_ldsc.rds	GenomicSEM/results/models/somatic5/ldsc_factor/Somatic5_factor.sumstats.gz

@@ -201,7 +201,7 @@ ref_dir        <- get_arg("--ref", "data/reference")
 outdir         <- get_arg("--outdir", "results/models/factor_gwas")
 ldsc_path      <- get_arg("--ldsc-path", "ldsc")
 
-core_arg       <- get_arg("--core", "Fibromyalgia,MECFS,IBS,Depression,PTSD,MigAura")
+core_arg       <- get_arg("--core", "Fibromyalgia,MECFS,IBS,Depression,PTSD,Migraine")
 validation_arg <- get_arg("--validation", NULL)
 
 # Trait type: "continuous" or "binary" (affects OLS/linprob in sumstats)
@@ -271,6 +271,9 @@ assert("trait" %in% names(man), "Manifest missing 'trait' column")
 assert("N_const" %in% names(man), "Manifest missing 'N_const' column")
 
 man[, N_const := suppressWarnings(as.numeric(N_const))]
+if ("effect_scale" %in% names(man)) {
+  man[, effect_scale := tolower(trimws(as.character(effect_scale)))]
+}
 
 # ==============================================================================
 # Sumstats file resolution (standard)
@@ -284,7 +287,8 @@ man[, N_const := suppressWarnings(as.numeric(N_const))]
 # ==============================================================================
 resolve_sumstats_file <- function(trait, processed_dir) {
   candidates <- c(
-    file.path(processed_dir, trait, paste0(trait, ".hg19.hm3.sumstats.tsv.gz")),  # HM3 (faster)
+    file.path(processed_dir, trait, paste0(trait, ".hg19.hm3.sumstats.tsv.gz")),
+    file.path(processed_dir, trait, paste0(trait, ".hg19.full.rsid.sumstats.tsv.gz")),
     file.path(processed_dir, trait, paste0(trait, ".hg19.full.sumstats.tsv.gz"))
   )
   for (f in candidates) {
@@ -412,12 +416,34 @@ Check that you have generated *.hg19.full.sumstats.tsv.gz (or *.hg19.full.rsid.s
   # Get sample sizes
   N_vec <- man[match(core, trait), N_const]
   info(sprintf("Sample sizes: %s", paste(N_vec, collapse=", ")))
-  
-  # Get sample sizes
-  N_vec <- man[match(core, trait), N_const]
-  
-  # Use MINIMAL parameters - extra params cause "... must be empty" error
+
+  # Derive per-trait se.logit from manifest metadata when available.
+  if ("effect_scale" %in% names(man)) {
+    effect_scale_vec <- man[match(core, trait), effect_scale]
+  } else {
+    effect_scale_vec <- rep(NA_character_, length(core))
+  }
   se_logit_vec <- rep(FALSE, length(core))
+  missing_scales <- character(0)
+  for (i in seq_along(core)) {
+    esc <- effect_scale_vec[i]
+    if (is.na(esc) || esc == "") {
+      missing_scales <- c(missing_scales, core[i])
+      next
+    }
+    if (esc == "logit") {
+      se_logit_vec[i] <- TRUE
+    } else if (esc == "linear") {
+      se_logit_vec[i] <- FALSE
+    } else {
+      die(sprintf("Unknown effect_scale '%s' for %s (expected 'logit' or 'linear')", esc, core[i]))
+    }
+  }
+  if (length(missing_scales) > 0) {
+    die(sprintf("Missing effect_scale for: %s", paste(missing_scales, collapse=", ")))
+  }
+  info(sprintf("se.logit settings: %s",
+               paste(sprintf("%s=%s", core, ifelse(se_logit_vec, "TRUE", "FALSE")), collapse=", ")))
   
   info("Calling sumstats() with minimal parameters...")
   info(sprintf("  GenomicSEM version: %s", packageVersion("GenomicSEM")))
