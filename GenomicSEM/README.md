@@ -1,6 +1,6 @@
 # GenomicSEM Analysis Pipeline
 
-This directory contains the GenomicSEM workflow used to estimate shared genetic architecture across the somatic-spectrum traits, fit latent factor models, run factor GWAS, and perform reviewer-requested diagnostics.
+This directory contains the GenomicSEM workflow used to estimate a shared genetic dimension across fibromyalgia, multisite chronic pain, broad migraine, ME/CFS, and IBS; fit latent factor models; run factor GWAS; and perform reviewer-requested diagnostics.
 
 Large input data, reference panels, and bulk result directories are intentionally not tracked in Git. They are expected to be present locally under `data/` and `results/`.
 
@@ -30,6 +30,8 @@ The pipeline expects:
 
 The scripts write model outputs under `results/`.
 
+The manifest includes both `Migraine` and `MigAura`. The primary analyses select `Migraine`, which points to the FinnGen R12 broad-migraine endpoint `G6_MIGRAINE` (N = 357,295; 28,504 cases and 328,791 controls). `MigAura` points to the separate migraine-with-aura endpoint and is an auxiliary manifest entry, not a Somatic5 core trait.
+
 ## Core Preprocessing
 
 Run these steps first:
@@ -43,7 +45,7 @@ Rscript scripts/02b_export_ldsc_matrices.R
 
 ## Primary Somatic5 Model
 
-Somatic5 includes chronic pain, fibromyalgia, ME/CFS, IBS, and migraine.
+Somatic5 includes multisite chronic pain, fibromyalgia, ME/CFS, IBS, and broad migraine. The explicit `--core` argument below is the primary submitted model definition.
 
 ```bash
 Rscript scripts/03_factor_model.R \
@@ -164,6 +166,10 @@ This writes:
 - `results/models/somatic5/model_summary.txt`
 
 Current result: all 10 possible pairwise residual covariances were tested. Several were nominally significant, but none survived Benjamini-Hochberg FDR correction.
+
+## Interpretation Scope
+
+The downstream gene, tissue, and cell-type analyses annotate the shared genetic factor. Enrichment in brain tissues and prenatal and adult neuronal populations does not by itself establish prenatal causality, developmental timing, or cerebellar specificity.
 
 ## Notes
 
