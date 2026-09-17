@@ -6,6 +6,4 @@ The primary Somatic5 model uses the FinnGen R12 broad-migraine endpoint `G6_MIGR
 
 Downstream gene, tissue, and cell-type analyses characterise the shared factor's biological annotations. Brain-tissue and prenatal and adult neuronal-cell enrichments are interpreted as convergent associations, not as evidence of prenatal causality or cerebellar specificity.
 
-The repository documentation is aligned with the final HGG submission snapshot `Lee_Somatic5_v23_HGG_submission_ready.zip`. No analysis code or generated results were changed for this documentation update.
-
 See [GenomicSEM/README.md](GenomicSEM/README.md) for the reproducible analysis command sequence and model definitions.
